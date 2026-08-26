@@ -1,0 +1,1 @@
+window.MCL_SUPABASE={url:'https://jeuecmmnxvlzpruyoraw.supabase.co',publishableKey:'sb_publishable_u20s-DDf1dtPwKE1uSaFbA_VDAI7PYL'};
