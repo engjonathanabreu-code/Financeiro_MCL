@@ -1,0 +1,157 @@
+name: Consolidar Financeiro MCL
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/build-mcl-from-integral.yml
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Baixar somente o codigo atual da referencia Integral
+        run: |
+          set -e
+          BASE="https://raw.githubusercontent.com/engjonathanabreu-code/financeiro_integral/main/public"
+          mkdir -p /tmp/mcl-src
+          for f in \
+            financeiro.bundle.js \
+            financeiro-auth-session-fix.js \
+            financeiro-cloud-storage.js \
+            financeiro-erp-sync-ui.js \
+            financeiro-erp-sync-fix.js \
+            financeiro-planning-canonical.js \
+            patch-v24-account-payment-delete.js \
+            patch-v20.js \
+            financeiro-dashboard-canonical.js \
+            financeiro-canonical-router.js \
+            financeiro.bundle.css \
+            financeiro-targeted-ui.css \
+            financeiro-planning-canonical.css; do
+            curl -fsSL "$BASE/$f" -o "/tmp/mcl-src/$f"
+          done
+          BASE_API="https://raw.githubusercontent.com/engjonathanabreu-code/financeiro_integral/main/api"
+          mkdir -p api
+          for f in ai-account.js ai-classify.js ai-health.js ai-receipt.js; do
+            curl -fsSL "$BASE_API/$f" -o "api/$f"
+          done
+      - name: Consolidar em arquivos canonicos e isolar a MCL
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          src=Path('/tmp/mcl-src')
+          js_order=[
+            'financeiro.bundle.js',
+            'financeiro-auth-session-fix.js',
+            'financeiro-cloud-storage.js',
+            'financeiro-erp-sync-ui.js',
+            'financeiro-erp-sync-fix.js',
+            'financeiro-planning-canonical.js',
+            'patch-v24-account-payment-delete.js',
+            'patch-v20.js',
+            'financeiro-dashboard-canonical.js',
+            'financeiro-canonical-router.js',
+          ]
+          css_order=['financeiro.bundle.css','financeiro-targeted-ui.css','financeiro-planning-canonical.css']
+
+          js='\n\n'.join((src/f).read_text() for f in js_order)
+          css='\n\n'.join((src/f).read_text() for f in css_order)
+
+          # Empresa, storage local e identificadores completamente separados da Integral.
+          replacements={
+            'Integral Financeiro':'Minha Casa Legal Financeiro',
+            'INTEGRAL Financeiro':'MINHA CASA LEGAL Financeiro',
+            'IntegralERP':'MCLEnterprise',
+            'window.IntegralERP':'window.MCLEnterprise',
+            'integral_fin_v1':'mcl_fin_v1',
+            'integralFinanceiro':'mclFinanceiro',
+            'integral_financeiro':'mcl_financeiro',
+            'integral-financeiro':'mcl-financeiro',
+            'logo-integral.png':'logo-mcl.jpg',
+            'admin@integral.local':'admin@mcl.local',
+            'funcionario@integral.local':'funcionario@mcl.local',
+            'Administrador Integral':'Administrador MCL',
+            'INTEGRALFINANCEIRO':'MINHACASALEGAL',
+          }
+          for a,b in replacements.items():
+            js=js.replace(a,b)
+            css=css.replace(a,b)
+
+          # Remove dados demonstrativos herdados. A aplicação começa vazia e recebe dados apenas do Supabase MCL.
+          seed_pattern=re.compile(r"const seed=\{accounts:\[.*?\],docs:\[.*?\],budgets:\[.*?\],trips:\[.*?\],plans:\[.*?\],revenues:\[.*?\],users:\[.*?\]\};",re.S)
+          js,n=seed_pattern.subn("const seed={accounts:[],docs:[],budgets:[],trips:[],plans:[],revenues:[],users:[]};",js,count=1)
+          if n!=1:
+            raise SystemExit('Nao foi possivel neutralizar o seed demonstrativo da Integral')
+
+          # Não permitir login demo herdado nem senha fixa da referência.
+          js=js.replace("<div class=\"demo-row\"><button class=\"btn ghost\" data-demo=\"admin\">Testar Administrador</button><button class=\"btn ghost\" data-demo=\"func\">Testar Funcionário</button></div>","")
+          js=re.sub(r";\$\$\('\[data-demo\]'\).*?;\$\('#login'\)\.onsubmit=", ";$('#login').onsubmit=", js, count=1, flags=re.S)
+
+          # O banco/empresa MCL é autônomo. Textos que ainda mencionem ERP passam a indicar base MCL.
+          js=js.replace('Supabase do ERP','Supabase Financeiro MCL').replace('Sessão do ERP','Sessão do Financeiro MCL').replace('no ERP','no Financeiro MCL')
+
+          # Paleta extraída da identidade enviada: azul profundo + laranja, mantendo branco e neutros.
+          css=re.sub(r":root\{[^}]+\}",":root{--primary:#0B3569;--primary2:#0E437F;--accent:#FF5A1F;--bg:#F5F7FA;--card:#fff;--text:#18324D;--muted:#6B7B8E;--line:#DCE4ED;--danger:#B63A3A;--warn:#C87812;--ok:#1B7B4B;--shadow:0 10px 30px rgba(11,53,105,.10)}",css,count=1)
+          css += '''\n\n/* Identidade Minha Casa Legal */\n.sidebar{background:linear-gradient(180deg,#082C5B,#0B3569)!important}.brand img{filter:none!important;width:155px!important;height:90px!important;border-radius:8px}.login-logo{width:190px!important;max-height:120px!important;border-radius:10px}.btn{background:#0B3569}.btn:hover{background:#0E437F}.nav button:hover,.nav button.active{background:rgba(255,90,31,.20)!important}.progress>i,.bar{background:#FF5A1F}.section-title,.metric b,.budget-card h3,.account-master-card h3,.trip-card h3{color:#0B3569}.badge{background:#EAF0F7;color:#0B3569}input:focus,select:focus,textarea:focus{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.12)}\n'''
+
+          Path('app.js').write_text(js)
+          Path('styles.css').write_text(css)
+          PY
+      - name: Criar configuracao e pagina unica
+        run: |
+          cat > supabase-config.js <<'EOF'
+          window.ERP_SUPABASE = {
+            url: 'https://jeuecmmnxvlzpruyoraw.supabase.co',
+            publishableKey: 'sb_publishable_u20s-DDf1dtPwKE1uSaFbA_VDAI7PYL'
+          };
+          EOF
+          cat > index.html <<'EOF'
+          <!doctype html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+            <title>Minha Casa Legal Financeiro</title>
+            <link rel="stylesheet" href="styles.css">
+          </head>
+          <body>
+            <canvas id="matrix"></canvas>
+            <div id="app"></div>
+            <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+            <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+            <script src="supabase-config.js"></script>
+            <script src="app.js"></script>
+          </body>
+          </html>
+          EOF
+          cat > package.json <<'EOF'
+          {"name":"financeiro-mcl","private":true,"scripts":{"build":"node -e \"console.log('Financeiro MCL pronto')\""}}
+          EOF
+          cat > vercel.json <<'EOF'
+          {"rewrites":[{"source":"/api/(.*)","destination":"/api/$1"},{"source":"/(.*)","destination":"/index.html"}]}
+          EOF
+      - name: Verificar isolamento e sintaxe
+        run: |
+          set -e
+          node --check app.js
+          for f in api/*.js; do node --check "$f"; done
+          ! grep -R "ycdsyilyvaxslkwbkxyo\|admin@integral.local\|funcionario@integral.local\|integral_fin_v1" app.js supabase-config.js api || (echo 'Referencia proibida a Integral encontrada' && exit 1)
+          grep -q "jeuecmmnxvlzpruyoraw" supabase-config.js
+          grep -q "const seed={accounts:\[\],docs:\[\],budgets:\[\],trips:\[\],plans:\[\],revenues:\[\],users:\[\]};" app.js
+      - name: Limpar artefatos temporarios e gravar codigo definitivo
+        run: |
+          rm -rf .github
+          git config user.name "Financeiro MCL"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -m "feat: cria Financeiro MCL consolidado e isolado"
+          git push
