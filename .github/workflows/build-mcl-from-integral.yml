@@ -63,17 +63,15 @@ jobs:
           js='\n\n'.join((src/f).read_text() for f in js_order)
           css='\n\n'.join((src/f).read_text() for f in css_order)
 
-          # Empresa, storage local e identificadores completamente separados da Integral.
           replacements={
             'Integral Financeiro':'Minha Casa Legal Financeiro',
             'INTEGRAL Financeiro':'MINHA CASA LEGAL Financeiro',
             'IntegralERP':'MCLEnterprise',
-            'window.IntegralERP':'window.MCLEnterprise',
             'integral_fin_v1':'mcl_fin_v1',
             'integralFinanceiro':'mclFinanceiro',
             'integral_financeiro':'mcl_financeiro',
             'integral-financeiro':'mcl-financeiro',
-            'logo-integral.png':'logo-mcl.jpg',
+            'logo-integral.png':'logo-mcl.svg',
             'admin@integral.local':'admin@mcl.local',
             'funcionario@integral.local':'funcionario@mcl.local',
             'Administrador Integral':'Administrador MCL',
@@ -83,22 +81,16 @@ jobs:
             js=js.replace(a,b)
             css=css.replace(a,b)
 
-          # Remove dados demonstrativos herdados. A aplicação começa vazia e recebe dados apenas do Supabase MCL.
           seed_pattern=re.compile(r"const seed=\{accounts:\[.*?\],docs:\[.*?\],budgets:\[.*?\],trips:\[.*?\],plans:\[.*?\],revenues:\[.*?\],users:\[.*?\]\};",re.S)
           js,n=seed_pattern.subn("const seed={accounts:[],docs:[],budgets:[],trips:[],plans:[],revenues:[],users:[]};",js,count=1)
           if n!=1:
             raise SystemExit('Nao foi possivel neutralizar o seed demonstrativo da Integral')
 
-          # Não permitir login demo herdado nem senha fixa da referência.
           js=js.replace("<div class=\"demo-row\"><button class=\"btn ghost\" data-demo=\"admin\">Testar Administrador</button><button class=\"btn ghost\" data-demo=\"func\">Testar Funcionário</button></div>","")
-          js=re.sub(r";\$\$\('\[data-demo\]'\).*?;\$\('#login'\)\.onsubmit=", ";$('#login').onsubmit=", js, count=1, flags=re.S)
-
-          # O banco/empresa MCL é autônomo. Textos que ainda mencionem ERP passam a indicar base MCL.
           js=js.replace('Supabase do ERP','Supabase Financeiro MCL').replace('Sessão do ERP','Sessão do Financeiro MCL').replace('no ERP','no Financeiro MCL')
 
-          # Paleta extraída da identidade enviada: azul profundo + laranja, mantendo branco e neutros.
           css=re.sub(r":root\{[^}]+\}",":root{--primary:#0B3569;--primary2:#0E437F;--accent:#FF5A1F;--bg:#F5F7FA;--card:#fff;--text:#18324D;--muted:#6B7B8E;--line:#DCE4ED;--danger:#B63A3A;--warn:#C87812;--ok:#1B7B4B;--shadow:0 10px 30px rgba(11,53,105,.10)}",css,count=1)
-          css += '''\n\n/* Identidade Minha Casa Legal */\n.sidebar{background:linear-gradient(180deg,#082C5B,#0B3569)!important}.brand img{filter:none!important;width:155px!important;height:90px!important;border-radius:8px}.login-logo{width:190px!important;max-height:120px!important;border-radius:10px}.btn{background:#0B3569}.btn:hover{background:#0E437F}.nav button:hover,.nav button.active{background:rgba(255,90,31,.20)!important}.progress>i,.bar{background:#FF5A1F}.section-title,.metric b,.budget-card h3,.account-master-card h3,.trip-card h3{color:#0B3569}.badge{background:#EAF0F7;color:#0B3569}input:focus,select:focus,textarea:focus{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.12)}\n'''
+          css += '''\n\n/* Identidade Minha Casa Legal */\n.sidebar{background:linear-gradient(180deg,#082C5B,#0B3569)!important}.brand img{filter:none!important;width:165px!important;height:100px!important;border-radius:8px}.login-logo{width:210px!important;max-height:135px!important;border-radius:10px}.btn{background:#0B3569}.btn:hover{background:#0E437F}.nav button:hover,.nav button.active{background:rgba(255,90,31,.20)!important}.progress>i,.bar{background:#FF5A1F}.section-title,.metric b,.budget-card h3,.account-master-card h3,.trip-card h3{color:#0B3569}.badge{background:#EAF0F7;color:#0B3569}input:focus,select:focus,textarea:focus{border-color:#FF5A1F;box-shadow:0 0 0 3px rgba(255,90,31,.12)}\n'''
 
           Path('app.js').write_text(js)
           Path('styles.css').write_text(css)
@@ -147,6 +139,7 @@ jobs:
           ! grep -R "ycdsyilyvaxslkwbkxyo\|admin@integral.local\|funcionario@integral.local\|integral_fin_v1" app.js supabase-config.js api || (echo 'Referencia proibida a Integral encontrada' && exit 1)
           grep -q "jeuecmmnxvlzpruyoraw" supabase-config.js
           grep -q "const seed={accounts:\[\],docs:\[\],budgets:\[\],trips:\[\],plans:\[\],revenues:\[\],users:\[\]};" app.js
+          test -f logo-mcl.svg
       - name: Limpar artefatos temporarios e gravar codigo definitivo
         run: |
           rm -rf .github
