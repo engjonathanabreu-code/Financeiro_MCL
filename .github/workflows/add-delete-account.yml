@@ -1,0 +1,38 @@
+name: Add delete account action
+on:
+  push:
+    paths:
+      - '.github/workflows/add-delete-account.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add delete account button and logic
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('integral-parity-v2.js')
+          s = p.read_text()
+          before = '''<div class="right"><button class="btn ghost" id="aedit">Editar conta</button><button class="btn" id="aadd">+ Pagamento</button></div>'''
+          after = '''<div class="right"><button class="btn ghost" id="aedit">Editar conta</button><button class="btn danger" id="adel">Excluir conta</button><button class="btn" id="aadd">+ Pagamento</button></div>'''
+          if before not in s:
+              raise SystemExit('Bloco de ações da conta não encontrado')
+          s = s.replace(before, after, 1)
+          before2 = '''q('#aedit',x).onclick=()=>{x.remove();accountForm(a.id)};q('#aadd',x).onclick=()=>{x.remove();payForm(null,a.id)};qa('[data-pay]',x).forEach(b=>b.onclick=()=>{x.remove();payForm(b.dataset.pay)})}'''
+          after2 = '''q('#aedit',x).onclick=()=>{x.remove();accountForm(a.id)};q('#adel',x).onclick=async()=>{if(!confirm(`Excluir a conta "${a.nome}"?\\n\\nTodos os pagamentos vinculados a esta conta também serão excluídos. Esta ação não pode ser desfeita.`))return;const pr=await sb.from('financeiro_pagamentos').delete().eq('conta_id',a.id);if(pr.error)return alert(pr.error.message);const ar=await sb.from('financeiro_contas').delete().eq('id',a.id);if(ar.error)return alert(ar.error.message);x.remove();accounts()};q('#aadd',x).onclick=()=>{x.remove();payForm(null,a.id)};qa('[data-pay]',x).forEach(b=>b.onclick=()=>{x.remove();payForm(b.dataset.pay)})}'''
+          if before2 not in s:
+              raise SystemExit('Eventos da conta não encontrados')
+          s = s.replace(before2, after2, 1)
+          p.write_text(s)
+          PY
+      - name: Commit change
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "Integral Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add integral-parity-v2.js
+          git commit -m "feat: permitir excluir conta no Financeiro MCL"
+          git push
