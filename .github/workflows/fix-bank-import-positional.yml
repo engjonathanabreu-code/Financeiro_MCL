@@ -1,0 +1,34 @@
+name: Fix bank import positional format
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-bank-import-positional.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Patch parser
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('bank-import.js')
+          s=p.read_text()
+          old="""function parseCsv(text){const lines=String(text||'').split(/\\r?\\n/).filter(x=>x.trim());if(lines.length<2)throw new Error('O CSV não possui movimentações suficientes.');const sep=detectSep(lines[0]),head=splitCsv(lines[0],sep).map(norm);const idx=(names)=>head.findIndex(h=>names.some(n=>h.includes(n)));const di=idx(['data','date']),desci=idx(['descricao','historico','memo','lancamento','detalhe','description']),vi=idx(['valor','amount']),debi=idx(['debito','saida']),credi=idx(['credito','entrada']),ti=idx(['tipo','natureza']);if(di<0||desci<0||(vi<0&&debi<0&&credi<0))throw new Error('Não consegui identificar as colunas de data, descrição e valor do extrato.');return lines.slice(1).map((line,i)=>{const c=splitCsv(line,sep),date=isoDate(c[di]),description=String(c[desci]||'').trim();let value=0,direction='Saída';if(vi>=0){const raw=num(c[vi]);direction=raw<0?'Saída':'Entrada';value=Math.abs(raw);const typ=norm(c[ti]);if(/debito|saida|pagamento|d/.test(typ))direction='Saída';if(/credito|entrada|recebimento|c/.test(typ))direction='Entrada';}else{const cr=num(c[credi]),db=num(c[debi]);if(Math.abs(cr)>0){direction='Entrada';value=Math.abs(cr)}else{direction='Saída';value=Math.abs(db)}}return {sourceIndex:i,date,description,value,direction,reference:''}}).filter(r=>r.date&&r.description&&r.value>0)}"""
+          new="""function parseCsv(text){const lines=String(text||'').split(/\\r?\\n/).filter(x=>x.trim());if(lines.length<2)throw new Error('O CSV não possui movimentações suficientes.');let sep=detectSep(lines[0]);const first=splitCsv(lines[0],sep),second=lines[1]?splitCsv(lines[1],sep):[];const positional=!isoDate(first[0])&&isoDate(second[0])&&second.length>=5&&/^[cd]$/i.test(String(second[4]||'').trim());if(positional){return lines.slice(1).map((line,i)=>{const c=splitCsv(line,sep),date=isoDate(c[0]);if(!date)return null;const description=String(c[1]||'').trim(),reference=String(c[2]||'').trim(),value=Math.abs(num(c[3])),type=String(c[4]||'').trim().toUpperCase(),direction=type==='C'?'Entrada':type==='D'?'Saída':'Saída';return {sourceIndex:i,date,description,value,direction,reference}}).filter(r=>r&&r.date&&r.description&&r.value>0)}const head=first.map(norm);const idx=(names)=>head.findIndex(h=>names.some(n=>h.includes(n)));const di=idx(['data','date']),desci=idx(['descricao','historico','memo','lancamento','detalhe','description']),vi=idx(['valor','amount']),debi=idx(['debito','saida']),credi=idx(['credito','entrada']),ti=idx(['tipo','natureza']);if(di<0||desci<0||(vi<0&&debi<0&&credi<0))throw new Error('Não consegui identificar as colunas de data, descrição e valor do extrato.');return lines.slice(1).map((line,i)=>{const c=splitCsv(line,sep),date=isoDate(c[di]),description=String(c[desci]||'').trim();let value=0,direction='Saída';if(vi>=0){const raw=num(c[vi]);direction=raw<0?'Saída':'Entrada';value=Math.abs(raw);const typ=norm(c[ti]);if(/debito|saida|pagamento|^d$/.test(typ))direction='Saída';if(/credito|entrada|recebimento|^c$/.test(typ))direction='Entrada';}else{const cr=num(c[credi]),db=num(c[debi]);if(Math.abs(cr)>0){direction='Entrada';value=Math.abs(cr)}else{direction='Saída';value=Math.abs(db)}}return {sourceIndex:i,date,description,value,direction,reference:''}}).filter(r=>r.date&&r.description&&r.value>0)}"""
+          if old not in s:
+              raise SystemExit('parser alvo não encontrado')
+          p.write_text(s.replace(old,new))
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name 'Integral Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add bank-import.js
+          git commit -m 'fix: suportar extrato bancário CSV sem cabeçalho' || exit 0
+          git push
