@@ -1,0 +1,1 @@
+-- Estrutura vazia da aba Recebimentos do Financeiro MCL.\n-- Migração aplicada ao projeto Supabase Financeiro MCL.\n-- Nenhum dado do Financeiro Integral foi copiado.\n
