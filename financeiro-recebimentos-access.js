@@ -4,7 +4,7 @@
 'use strict';
 const norm=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
 function currentUser(){try{return typeof profile!=='undefined'?profile:window.profile}catch{return window.profile}}
-function allowed(){const u=currentUser();const role=norm(u?.role||u?.tipo||u?.type);const sector=norm(u?.setor||u?.sector);return role==='administrador'||role==='financeiro'||sector==='financeiro'}
+function allowed(){try{if(typeof admin==='function'&&admin())return true}catch{}const u=currentUser();const role=norm(u?.role||u?.tipo||u?.type);const sector=norm(u?.setor||u?.sector);return role==='administrador'||role==='financeiro'||sector==='financeiro'}
 function guard(){
  const buttons=[...document.querySelectorAll('.nav [data-view="receivables"],.nav [data-view="recebimentos"],.nav [data-view="receipts"]')];
  buttons.forEach(b=>{if(allowed()){b.hidden=false;b.style.removeProperty('display')}else{b.hidden=true;b.style.setProperty('display','none','important')}});
