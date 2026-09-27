@@ -40,11 +40,14 @@ async function toggle(btn){
  if(!clientName||!numero)return;
  btn.disabled=true;
  try{
-   const c=await sb.from('fin_receb_clientes').select('id').eq('nome',clientName).limit(2);if(c.error)throw c.error;
-   if(!c.data?.length)throw new Error('Cliente não encontrado.');
-   let q=sb.from('fin_receb_parcelas').select('id,valor_previsto').eq('cliente_id',c.data[0].id).eq('numero',numero).limit(1);const p=await q;if(p.error)throw p.error;if(!p.data?.length)throw new Error('Parcela não encontrada.');
+   /* Identifica a parcela pelo id da linha (dois clientes podem ter o mesmo nome). */
+   const tr=btn.closest('tr'),parcelaId=tr?.dataset.parcelaId;let p;
+   if(parcelaId){p=await sb.from('fin_receb_parcelas').select('*').eq('id',parcelaId).limit(1)}
+   else{const c=await sb.from('fin_receb_clientes').select('id').eq('nome',clientName).limit(2);if(c.error)throw c.error;if(!c.data?.length)throw new Error('Cliente não encontrado.');if(c.data.length>1)throw new Error('Há mais de um cliente com este nome. Reabra a ficha do cliente.');p=await sb.from('fin_receb_parcelas').select('*').eq('cliente_id',c.data[0].id).eq('numero',numero).limit(1)}
+   if(p.error)throw p.error;if(!p.data?.length)throw new Error('Parcela não encontrada.');
    const parcel=p.data[0];
-   const values=paid?{status:'Pendente',pago_em:null,valor_liquidado:0,diferenca:0}:{status:'Pago',pago_em:new Date().toISOString().slice(0,10),valor_liquidado:Number(parcel.valor_previsto||0),diferenca:0};
+   if(paid&&!confirm(`Desmarcar o pagamento da parcela #${numero}? O valor pago e a data serão apagados e a parcela voltará para Pendente.`))return;
+   const values=paid?{status:'Pendente',pago_em:null,valor_liquidado:0,diferenca:0}:{status:'Pago',pago_em:new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,10),valor_liquidado:Number(parcel.valor_previsto||0),diferenca:0};
    const u=await sb.from('fin_receb_parcelas').update(values).eq('id',parcel.id).select('id,status').single();if(u.error)throw u.error;
    const row=btn.closest('tr');const cells=row.querySelectorAll('td');
    const newPaid=!paid;btn.dataset.paid=newPaid?'1':'0';btn.textContent=newPaid?'Desmarcar':'✓ Pago';btn.classList.toggle('is-paid',newPaid);

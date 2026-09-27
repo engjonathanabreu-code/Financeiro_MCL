@@ -3,7 +3,7 @@
 const cfg=window.MCL_SUPABASE||{};
 const sb=window.supabase?.createClient?.(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true}});
 if(!sb)return;
-const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const monthLabel=m=>{const [y,mo]=m.split('-');return `${mo}/${y}`};
 function ensureCss(){if(document.getElementById('recebFutureCss'))return;const s=document.createElement('style');s.id='recebFutureCss';s.textContent=`
@@ -26,7 +26,7 @@ async function fetchAllFutureRows(start){
    const r=await sb.from('fin_receb_parcelas')
      .select('cliente_id,vencimento,valor_previsto,status')
      .gte('vencimento',`${start}-01`)
-     .neq('status','Cancelado')
+     
      .order('vencimento',{ascending:true})
      .order('id',{ascending:true})
      .range(from,from+pageSize-1);
@@ -45,7 +45,7 @@ async function openFuture(){ensureCss();try{
  ]);
  const err=[cr,mr].find(x=>x.error);if(err?.error)throw err.error;
  const clients=new Map((cr.data||[]).filter(c=>c.ativo!==false).map(c=>[c.id,c]));const munis=new Map((mr.data||[]).filter(m=>m.ativo!==false).map(m=>[m.id,m]));
- const rows=parcelas.filter(p=>clients.has(p.cliente_id));if(!rows.length){alert('Não há parcelas futuras cadastradas.');return}
+ const rows=parcelas.filter(p=>p.status!=='Cancelado'&&clients.has(p.cliente_id)&&(!clients.get(p.cliente_id).municipio_id||munis.has(clients.get(p.cliente_id).municipio_id)));if(!rows.length){alert('Não há parcelas futuras cadastradas.');return}
  const totals=new Map(),muniLast=new Map(),muniMonthValue=new Map();
  for(const p of rows){const mo=p.vencimento.slice(0,7),v=Number(p.valor_previsto||0),c=clients.get(p.cliente_id);totals.set(mo,(totals.get(mo)||0)+v);const mid=c?.municipio_id;if(mid){if(!muniLast.has(mid)||mo>muniLast.get(mid))muniLast.set(mid,mo);const k=`${mid}|${mo}`;muniMonthValue.set(k,(muniMonthValue.get(k)||0)+v)}}
  const months=[...totals.keys()].sort();const max=Math.max(...months.map(m=>totals.get(m)||0),1);

@@ -1,0 +1,154 @@
+/* Financeiro MCL — UI Style Guide (Minha Casa Legal).
+   Camada visual carregada por último: só aparência; nenhuma classe usada pelo JavaScript foi renomeada.
+   01 Grid: breakpoints Bootstrap (576 / 768 / 992 / 1200).
+   02 Paleta: #1D2139 (navy), #00ADF2 (azul), #FF9E1B (laranja) com tons de 90% a 60%.
+   03 Tipografia: Proxima Nova (Montserrat como substituta quando a Proxima não estiver instalada).
+   04 Botões com contorno e fundo suave; 05 campos (vazio, inativo, ativo, preenchido, erro); 06 dicas. */
+
+:root{
+  --mcl-navy:#1D2139;--mcl-navy-90:#34374D;--mcl-navy-80:#4A4D61;--mcl-navy-70:#616374;--mcl-navy-60:#777A88;
+  --mcl-blue:#00ADF2;--mcl-blue-90:#1AB5F3;--mcl-blue-80:#33BDF5;--mcl-blue-70:#4DC6F6;--mcl-blue-60:#66CEF7;
+  --mcl-blue-dark:#0086BD;           /* azul para texto/links sobre branco (contraste AA) */
+  --mcl-blue-soft:#E5F7FE;--mcl-blue-soft-2:#CCEFFD;
+  --mcl-orange:#FF9E1B;--mcl-orange-90:#FFA832;--mcl-orange-80:#FFB149;--mcl-orange-70:#FFBB5F;--mcl-orange-60:#FFC576;
+  --mcl-orange-dark:#B96A00;
+  --mcl-orange-soft:#FFF3E3;--mcl-orange-soft-2:#FFDDB0;
+  --mcl-bg:#F6F7F9;--mcl-surface:#FFFFFF;--mcl-surface-2:#F7F7F8;
+  --mcl-border:#D9DCE3;--mcl-border-strong:#B9BECB;
+  --mcl-text:#1D2139;--mcl-muted:#5F6377;--mcl-disabled:#A9ADB8;
+  --mcl-success:#1F7A47;--mcl-success-bg:#E6F4EC;--mcl-success-border:#BFE3CD;
+  --mcl-danger:#C62828;--mcl-danger-bg:#FDEEEE;--mcl-danger-border:#E57373;
+  --mcl-warning:var(--mcl-orange-dark);--mcl-warning-bg:var(--mcl-orange-soft);--mcl-warning-border:var(--mcl-orange-60);
+  --mcl-info:var(--mcl-blue-dark);--mcl-info-bg:var(--mcl-blue-soft);--mcl-info-border:var(--mcl-blue-60);
+  --mcl-r:4px;--mcl-r-card:8px;--mcl-r-pill:999px;
+  --mcl-shadow:0 2px 8px rgba(29,33,57,.08);--mcl-shadow-pop:0 6px 20px rgba(29,33,57,.14);
+  --mcl-focus:0 0 0 3px rgba(0,173,242,.18);
+  --mcl-font:"Proxima Nova","Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;
+
+  /* Variáveis legadas apontando para a paleta do guia */
+  --primary:var(--mcl-navy);--primary-2:var(--mcl-navy-90);--accent:var(--mcl-orange);--accent-soft:var(--mcl-orange-soft);
+  --bg:var(--mcl-bg);--card:var(--mcl-surface);--text:var(--mcl-text);--muted:var(--mcl-muted);--line:var(--mcl-border);
+  --danger:var(--mcl-danger);--warn:var(--mcl-warning);--ok:var(--mcl-success);--shadow:var(--mcl-shadow);
+}
+
+/* 03 Tipografia */
+html,body{font-family:var(--mcl-font);font-size:14px;line-height:1.5;color:var(--mcl-text);background:var(--mcl-bg);letter-spacing:.01em}
+button,input,select,textarea{font-family:inherit}
+h1{font-size:32px;font-weight:600}
+h2{font-size:24px;font-weight:600}
+h3{font-size:20px;font-weight:400}
+h4{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.muted,small.muted{color:var(--mcl-muted)}
+a{color:var(--mcl-blue-dark)}
+
+/* Login */
+body.login-mode,.login-mode #matrix{background:var(--mcl-navy)!important}
+.login-card{background:var(--mcl-surface);border:1px solid var(--mcl-border);border-radius:var(--mcl-r-card);box-shadow:var(--mcl-shadow-pop);padding:32px}
+.login-card h1{color:var(--mcl-navy);font-size:24px;font-weight:600}
+.login-card .sub,.sub{color:var(--mcl-muted)}
+.login-error{color:var(--mcl-danger);font-weight:600}
+
+/* Estrutura: barra lateral navy, topo branco */
+.sidebar{background:var(--mcl-navy)!important;color:#fff}
+.brand img{border-radius:var(--mcl-r)}
+.nav{gap:2px}
+.nav button{color:#C9CCD6;font-weight:600;font-size:14px;border-radius:var(--mcl-r);padding:10px 12px;position:relative;transition:background-color .15s,color .15s}
+.nav button:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav button.active{background:rgba(0,173,242,.16);color:#fff}
+.nav button.active::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:3px;border-radius:0 3px 3px 0;background:var(--mcl-blue)}
+.nav .sep{background:rgba(255,255,255,.12)}
+.sidebar-foot{border-top-color:rgba(255,255,255,.12)}
+.user-mini{color:#C9CCD6}.user-mini strong{color:#fff}
+.sidebar .sidebar-foot .btn{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.35)}
+.sidebar .sidebar-foot .btn:hover{background:rgba(255,255,255,.08);border-color:#fff;color:#fff}
+.topbar{background:var(--mcl-surface);border-bottom:1px solid var(--mcl-border);height:64px}
+.topbar h2{font-size:24px;font-weight:600;color:var(--mcl-navy)}
+.content{padding:24px}
+
+/* Cartões e métricas */
+.card{background:var(--mcl-surface);border:1px solid var(--mcl-border);border-radius:var(--mcl-r-card);box-shadow:var(--mcl-shadow);padding:16px}
+.card h3,.section-head h3,.section-title{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--mcl-navy)}
+.metric h3{font-size:12px!important;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mcl-muted)!important}
+.metric b{font-size:24px;font-weight:700;color:var(--mcl-navy)}
+.metric small{color:var(--mcl-muted)}
+.empty{border:1px dashed var(--mcl-border);border-radius:var(--mcl-r-card);color:var(--mcl-muted);background:var(--mcl-surface)}
+.progress{background:var(--mcl-blue-soft);border-radius:var(--mcl-r-pill)}.progress>i{background:var(--mcl-blue)}
+.kpi-positive{color:var(--mcl-success)!important}.kpi-negative{color:var(--mcl-danger)!important}
+
+/* 04 Botões — contorno com fundo suave, texto em caixa alta */
+.btn{min-height:38px;padding:8px 18px;border-radius:var(--mcl-r);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;line-height:1.2;
+  background:var(--mcl-blue-soft);color:var(--mcl-navy);border:1px solid var(--mcl-blue);box-shadow:none;transition:background-color .15s,border-color .15s,color .15s}
+.btn:hover{background:var(--mcl-blue-soft-2);color:var(--mcl-navy);border-color:var(--mcl-blue)}
+.btn:active{background:var(--mcl-blue-60);border-color:var(--mcl-blue)}
+.btn:focus-visible{outline:0;box-shadow:var(--mcl-focus)}
+.btn.secondary,.btn.ghost{background:var(--mcl-surface);color:var(--mcl-navy);border-color:var(--mcl-blue)}
+.btn.ghost{border-color:var(--mcl-border-strong)}
+.btn.secondary:hover,.btn.ghost:hover{background:var(--mcl-surface-2);border-color:var(--mcl-blue);color:var(--mcl-navy)}
+.btn.orange{background:var(--mcl-orange-soft);color:var(--mcl-navy);border-color:var(--mcl-orange)}
+.btn.orange:hover{background:var(--mcl-orange-soft-2);border-color:var(--mcl-orange)}
+.btn.danger{background:var(--mcl-surface);color:var(--mcl-danger);border-color:var(--mcl-danger-border)}
+.btn.danger:hover{background:var(--mcl-danger-bg);border-color:var(--mcl-danger)}
+.btn:disabled,.btn[disabled]{background:var(--mcl-surface-2)!important;color:var(--mcl-disabled)!important;border-color:var(--mcl-border)!important;cursor:not-allowed}
+.btn.small{min-height:30px;padding:5px 12px;font-size:11px}
+.btn.icon{width:34px;height:34px;min-height:34px;padding:0;letter-spacing:0}
+.btn.wide{min-height:42px}
+.toolbar .btn,.actions .btn,.modal-foot .btn{min-height:34px;padding:6px 14px}
+.nav button,.segmented button,.tab-btn{text-transform:none;letter-spacing:0}
+
+/* Abas / segmentados */
+.segmented{background:var(--mcl-surface-2);border:1px solid var(--mcl-border);border-radius:var(--mcl-r);padding:3px;display:inline-flex}
+.segmented button{border:0;background:transparent;color:var(--mcl-muted);font-weight:600;border-radius:3px;padding:6px 12px}
+.segmented button.active{background:var(--mcl-surface);color:var(--mcl-navy);box-shadow:inset 0 -2px 0 var(--mcl-blue)}
+
+/* 05 Campos */
+.field{gap:6px}
+.field label{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mcl-navy)}
+input,select,textarea{border:1px solid var(--mcl-border-strong);border-radius:var(--mcl-r);background:var(--mcl-surface);color:var(--mcl-text);font-size:14px;min-height:42px;padding:9px 12px;transition:border-color .15s,box-shadow .15s}
+input::placeholder,textarea::placeholder{color:#8B8FA0}
+input:focus,select:focus,textarea:focus{border-color:var(--mcl-blue);box-shadow:var(--mcl-focus);outline:0}
+input:disabled,select:disabled,textarea:disabled,input[readonly]{background:var(--mcl-surface-2);color:var(--mcl-muted);border-color:var(--mcl-border)}
+input:user-invalid,select:user-invalid,textarea:user-invalid,input[aria-invalid="true"]{border-color:var(--mcl-danger);background:var(--mcl-danger-bg)}
+input[type=checkbox],input[type=radio]{min-height:0;width:auto;accent-color:var(--mcl-blue)}
+input[type=file]{min-height:0;padding:8px}
+textarea{min-height:90px}
+
+/* Status (badges) e avisos */
+.badge{display:inline-flex;align-items:center;border-radius:var(--mcl-r-pill);padding:3px 10px;font-size:11px;font-weight:700;letter-spacing:.03em;background:var(--mcl-info-bg);color:var(--mcl-info);border:1px solid var(--mcl-info-border)}
+.badge.ok{background:var(--mcl-success-bg);color:var(--mcl-success);border-color:var(--mcl-success-border)}
+.badge.warn,.badge.orange{background:var(--mcl-warning-bg);color:var(--mcl-warning);border-color:var(--mcl-warning-border)}
+.badge.danger{background:var(--mcl-danger-bg);color:var(--mcl-danger);border-color:var(--mcl-danger-border)}
+.notice{border-radius:var(--mcl-r);padding:12px 16px;background:var(--mcl-info-bg);color:var(--mcl-navy);border:1px solid var(--mcl-info-border);border-left:4px solid var(--mcl-blue)}
+.notice.orange,.notice.warn{background:var(--mcl-warning-bg);border-color:var(--mcl-warning-border);border-left-color:var(--mcl-orange)}
+.notice.danger{background:var(--mcl-danger-bg);color:var(--mcl-danger);border-color:var(--mcl-danger-border);border-left-color:var(--mcl-danger)}
+
+/* Tabelas */
+.table-wrap{background:var(--mcl-surface);border:1px solid var(--mcl-border);border-radius:var(--mcl-r-card)}
+.table th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--mcl-muted);background:var(--mcl-surface-2)}
+.table th,.table td{border-bottom-color:var(--mcl-border);vertical-align:middle}
+.table tbody tr:hover td{background:#F2FAFE}
+@media(min-width:741px){.table td.actions{display:table-cell!important;white-space:nowrap;text-align:right}.table td.actions>.btn{margin:2px 0 2px 6px}.table td.actions>.btn:first-child{margin-left:0}}
+
+/* Modais e 06 dicas */
+.modal-backdrop{background:rgba(29,33,57,.55)}
+.modal{border-radius:var(--mcl-r-card);box-shadow:var(--mcl-shadow-pop);border:1px solid var(--mcl-border)}
+.modal-head,.modal-foot{border-color:var(--mcl-border);padding:16px 24px}
+.modal-head h3{font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.modal-body{padding:24px}
+.modal-foot{gap:8px}
+[data-tooltip]{position:relative}
+[data-tooltip]:hover::after{content:attr(data-tooltip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translateX(-50%);white-space:nowrap;background:var(--mcl-surface);color:var(--mcl-navy);border:1px solid var(--mcl-border);box-shadow:var(--mcl-shadow-pop);border-radius:var(--mcl-r);padding:8px 12px;font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:none;z-index:50}
+
+/* 01 Grid — colunas por breakpoint Bootstrap */
+@media(max-width:1199px){.cols-4{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:991px){.cols-4,.cols-3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:575px){.cols-4,.cols-3,.cols-2{grid-template-columns:1fr}}
+@media(max-width:740px){.content{padding:12px}.btn{min-height:40px}}
+
+/* Barras de ferramentas: seletores de mês/data não ocupam a linha inteira */
+.toolbar input[type=month],.toolbar input[type=date],.toolbar select{width:auto;min-width:180px}
+.receb-toolbar .receb-month-nav{display:flex;flex-wrap:nowrap;align-items:center;gap:8px}
+@media(max-width:740px){.toolbar input[type=month],.toolbar input[type=date]{flex:1}}
+
+/* Ações nos cards (orçamentos, viagens) */
+.card-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--mcl-border)}
+.register-row .btn.small{min-height:28px;padding:4px 10px}
