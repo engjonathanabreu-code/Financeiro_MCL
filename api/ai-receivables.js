@@ -1,10 +1,16 @@
+const {readMovement}=require('../lib/receivables-pdf');
 module.exports=async function handler(req,res){
  if(req.method!=='POST')return res.status(405).json({ok:false,error:'METHOD_NOT_ALLOWED'});
- if(!process.env.OPENAI_API_KEY)return res.status(500).json({ok:false,error:'OPENAI_API_KEY_NOT_CONFIGURED'});
+
  try{
   const {file,fileName='arquivo',mode='payments'}=req.body||{};
   if(!file||!String(file).startsWith('data:'))return res.status(400).json({ok:false,error:'FILE_REQUIRED'});
   if(file.length>16000000)return res.status(413).json({ok:false,error:'FILE_TOO_LARGE'});
+  if(mode==='payments'&&/^data:application\/pdf[;,]/i.test(file)){
+   const parsed=await readMovement(Buffer.from(file.slice(file.indexOf(',')+1),'base64'));
+   if(parsed)return res.status(200).json({ok:true,...parsed});
+  }
+  if(!process.env.OPENAI_API_KEY)return res.status(500).json({ok:false,error:'OPENAI_API_KEY_NOT_CONFIGURED'});
   const configured=String(process.env.OPENAI_FINANCE_MODEL||'').trim(),model=!configured||configured==='gpt-5.6-luna'?'gpt-5-mini':configured;
   let schema,prompt,name;
   if(mode==='clients'){
@@ -21,6 +27,7 @@ module.exports=async function handler(req,res){
   const raw=await response.text();let data={};try{data=raw?JSON.parse(raw):{}}catch{return res.status(502).json({ok:false,error:'OPENAI_INVALID_RESPONSE',details:'A OpenAI retornou uma resposta inválida.'})}
   if(!response.ok)return res.status(response.status).json({ok:false,error:'OPENAI_ERROR',details:data?.error?.message||'Falha na OpenAI',model});
   const text=data.output_text||(data.output||[]).flatMap(i=>i.content||[]).filter(i=>i.type==='output_text').map(i=>i.text).join('');let parsed={};try{parsed=JSON.parse(text||'{}')}catch{return res.status(502).json({ok:false,error:'OPENAI_OUTPUT_INVALID',details:'Não foi possível interpretar o arquivo retornado pela IA.'})}
+  if(data.status==='incomplete'||(mode==='payments'&&(!Array.isArray(parsed.entries)||!parsed.entries.length)))return res.status(422).json({ok:false,error:'REPORT_NOT_EXTRACTED',details:'Não foi possível extrair pagamentos completos deste relatório. Nenhuma parcela foi alterada.'});
   return res.status(200).json({ok:true,model:data.model||model,...parsed});
  }catch(e){console.error('ai-receivables error',e);return res.status(500).json({ok:false,error:'INTERNAL_ERROR',details:String(e?.message||e)})}
 }
