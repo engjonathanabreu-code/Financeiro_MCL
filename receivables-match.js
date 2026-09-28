@@ -13,11 +13,12 @@
    if(!cs.length&&name){cs=clients.filter(c=>norm(c.nome).startsWith(name));}
    if(remessa&&cs.length){const scoped=cs.filter(c=>prefix(c.codigo)===remessa);if(scoped.length)cs=scoped;else return {reason:'Remessa não corresponde ao cliente'};}
    if(cs.length!==1)return {reason:cs.length?'Nome ambíguo':'Cliente não localizado'};
-   candidates=parcels.filter(p=>p.cliente_id===cs[0].id&&p.vencimento===due&&Math.abs(Number(p.valor_previsto)-amount)<.03);
+   candidates=parcels.filter(p=>p.cliente_id===cs[0].id&&p.vencimento===due);
   }
-  if(candidates.length!==1)return {reason:candidates.length?'Parcela ambígua':'Sem parcela com mesmo vencimento e valor'};
+  if(candidates.length!==1)return {reason:candidates.length?'Parcela ambígua':'Sem parcela com mesmo vencimento'};
   const p=candidates[0];if(p.status==='Cancelado'||p.status==='Parcial')return {reason:'Parcela cancelada ou com pagamento parcial'};
   if(nn&&digits(p.nosso_numero)&&digits(p.nosso_numero)!==nn)return {reason:'Parcela vinculada a outro boleto'};
+  if(Math.abs(Number(p.valor_previsto)-amount)>=.03&&paid<Number(p.valor_previsto)-.03)return {reason:'Valor recebido inferior ao previsto; conferir desconto ou pagamento parcial'};
   if(p.status==='Pago')return {parcel:p,already:true};
   return {parcel:p,update:{status:'Pago',pago_em:entry.pagamento,valor_liquidado:paid,diferenca:Math.round((paid-Number(p.valor_previsto))*100)/100,nosso_numero:p.nosso_numero||entry.nosso_numero||null,documento:p.documento||entry.documento||null}};
  }
