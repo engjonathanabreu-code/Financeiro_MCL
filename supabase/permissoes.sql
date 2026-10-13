@@ -17,7 +17,7 @@ alter table public.financeiro_permissoes enable row level security;
 grant select,insert,update,delete on public.financeiro_permissoes to authenticated;
 
 -- Catálogo: mesmas chaves de mcl-permissoes.js (ABAS). Os ids são os data-view do menu.
-create or replace function public.mcl_catalogo_permissoes() returns jsonb language sql immutable as $$
+create or replace function public.mcl_catalogo_permissoes() returns jsonb language sql immutable set search_path='' as $$
   select '{
     "dashboard":["ver"],
     "accounts":["ver","criar","editar","excluir","ia"],
@@ -34,7 +34,7 @@ create or replace function public.mcl_catalogo_permissoes() returns jsonb langua
 $$;
 
 -- Padrão de quem não tem linha salva (espelhado em mcl-permissoes.js: padrao()).
-create or replace function public.mcl_padrao_permissao(p_admin boolean,p_aba text,p_acao text) returns boolean language sql immutable as $$
+create or replace function public.mcl_padrao_permissao(p_admin boolean,p_aba text,p_acao text) returns boolean language sql immutable set search_path='' as $$
   select case
     when p_aba='registers' and p_acao='permissoes' then false
     when p_admin then true
@@ -125,6 +125,7 @@ begin
   new.updated_by:=coalesce(auth.uid(),new.updated_by);
   return new;
 end $$;
+revoke all on function public.mcl_permissoes_guard() from public,anon,authenticated;
 drop trigger if exists financeiro_permissoes_guard on public.financeiro_permissoes;
 create trigger financeiro_permissoes_guard before insert or update or delete on public.financeiro_permissoes for each row execute function public.mcl_permissoes_guard();
 
