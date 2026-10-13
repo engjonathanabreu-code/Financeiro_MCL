@@ -17,6 +17,7 @@ function css(){
 
 function enhance(){
  css();
+ if(!window.MCLPermissoes?.pode('receivables','editar'))return;
  const modal=document.querySelector('#recebHistoryModal');if(!modal)return;
  const table=modal.querySelector('.receb-history-table');if(!table||table.dataset.payReady==='1')return;
  table.dataset.payReady='1';

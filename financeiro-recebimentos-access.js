@@ -15,6 +15,8 @@ function currentUser(){
 }
 
 function allowed(){
+  /* Com a matriz de permissões carregada, ela decide (é a mesma regra do banco). */
+  if(window.MCLPermissoes?.estado?.carregada) return window.MCLPermissoes.pode('receivables');
   /* Se o app nativo renderizou o item no menu, o perfil já passou pela regra
      de autorização do app.js. Isto corrige o falso bloqueio que ocorria porque
      profile/admin são variáveis privadas do IIFE principal e não existem em window. */

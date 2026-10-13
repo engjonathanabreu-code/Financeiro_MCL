@@ -12,6 +12,7 @@ async function del(id,row){
   await window.MCLCashflowCanonical?.render?.();
 }
 function install(){
+  if(!window.MCLPermissoes?.pode('cashflow','excluir'))return;
   if((q('#title')?.textContent||'').trim()!=='Fluxo de Caixa')return;
   qa('[data-mcl-cash-drag]').forEach(tr=>{
     const id=tr.dataset.mclCashDrag;if(!id||tr.querySelector('[data-mcl-cash-delete]'))return;

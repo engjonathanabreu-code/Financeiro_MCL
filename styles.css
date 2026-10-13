@@ -7,3 +7,12 @@
 @media(max-width:650px){.budget-view-switch{align-items:flex-start;flex-direction:column}.budget-detail.is-reduced .budget-stage .table{min-width:0}.budget-detail.is-reduced .budget-item-planned{width:115px}.budget-detail.is-reduced .budget-item-actions{width:65px}.budget-detail.is-reduced .budget-stage .table th,.budget-detail.is-reduced .budget-stage .table td{font-size:11px;padding:6px}.budget-detail.is-reduced .budget-stage .table td:first-child{word-break:break-word}.budget-detail.is-reduced .budget-stage-summary{width:100%;justify-content:space-between}}
 .budget-detail.is-reduced{gap:12px}.budget-detail.is-reduced>.grid{display:flex;flex-wrap:wrap;gap:8px}.budget-detail.is-reduced>.grid>.card{flex:1 1 125px;border:0;box-shadow:none;background:var(--bg);padding:8px}.budget-detail.is-reduced>.grid h3{font-size:14px;margin-top:4px}.budget-detail.is-reduced .card-actions .btn{padding:6px 8px;font-size:11px}
 @media(max-width:650px){.budget-detail.is-reduced{padding:12px}.budget-detail.is-reduced .budget-stage{padding:10px}}@media(max-width:420px){.budget-detail.is-reduced .budget-item-planned{width:105px}.budget-detail.is-reduced .budget-item-actions{width:60px}}
+
+/* Cadastros › Permissões por usuário */
+.perm-card{margin-top:16px}
+.perm-card .toolbar{align-items:flex-start;gap:14px}
+#permUser{min-width:260px}
+.perm-table th,.perm-table td{text-align:center;vertical-align:middle}
+.perm-table th:first-child,.perm-table td:first-child{text-align:left;min-width:220px}
+.perm-table td small{display:block;font-weight:400;max-width:420px}
+.perm-table input[type=checkbox]{width:18px;height:18px;cursor:pointer}

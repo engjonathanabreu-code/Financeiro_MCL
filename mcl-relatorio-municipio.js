@@ -158,7 +158,7 @@ async function openModal(){
     finally{btn.disabled=false}};
 }
 function install(){
-  if((q('#title')?.textContent||'').trim()!=='Recebimentos')return;
+  if((q('#title')?.textContent||'').trim()!=='Recebimentos'||!window.MCLPermissoes?.pode('receivables','exportar'))return;
   const right=q('#content .receb-toolbar .right')||q('#content .toolbar .right');if(!right||q('#mclMuniReportBtn',right))return;
   const b=document.createElement('button');b.type='button';b.id='mclMuniReportBtn';b.className='btn orange';b.textContent='Relatório do município';b.onclick=openModal;right.prepend(b);
 }

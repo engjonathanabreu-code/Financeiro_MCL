@@ -11,7 +11,7 @@ const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelecto
 const E=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const M=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const D=v=>v?new Date(String(v).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR'):'—';
-const isAdmin=()=>/Administrador/i.test(q('.user-mini')?.textContent||'');
+const pode=(a,x='ver')=>!!window.MCLPermissoes?.pode(a,x);const isAdmin=()=>pode('receivables','editar');
 const refresh=async()=>{try{await window.MCLRecebimentos?.open?.()}catch(e){console.error(e)}};
 function modal(title,body,foot=''){const x=document.createElement('div');x.className='modal-backdrop';x.style.zIndex='10040';x.innerHTML=`<section class="modal" style="width:min(640px,96vw)"><div class="modal-head"><h3>${E(title)}</h3><button type="button" class="btn ghost small" data-x>Fechar</button></div><div class="modal-body">${body}</div>${foot?`<div class="modal-foot">${foot}</div>`:''}</section>`;document.body.append(x);qa('[data-x]',x).forEach(b=>b.onclick=()=>x.remove());return x}
 const msg=(x,t)=>{const n=q('[data-msg]',x);if(n){n.hidden=false;n.textContent=t}};
@@ -52,7 +52,7 @@ async function openArchived(){
 
 /* ---------- Cliente: arquivar ---------- */
 function decorateClientDetail(){
-  const del=q('#recebModal #delC');if(!del||q('#mclArchC'))return;
+  const del=q('#recebModal #delC')||q('#recebModal .receb-client-actions')?.lastElementChild;if(!del||!isAdmin()||q('#mclArchC'))return;
   const title=(q('#recebModal .modal-head h3, #recebModal h3')?.textContent||'').replace(/^Cliente\s*—\s*/,'').trim();
   const b=document.createElement('button');b.type='button';b.id='mclArchC';b.className='btn secondary';b.textContent='Arquivar';del.before(b);
   b.onclick=async()=>{const {data,error}=await sb.from('fin_receb_clientes').select('id,nome').eq('nome',title);if(error)return alert(error.message);if(!data?.length)return alert('Cliente não encontrado.');if(data.length>1)return alert('Há mais de um cliente com este nome. Arquive pelo cartão do cliente no município.');if(!confirm(`Arquivar ${data[0].nome}?\n\nO cliente e o histórico de parcelas são mantidos; ele só deixa de aparecer nos totais. Você pode reativar em "Arquivados".`))return;const r=await sb.from('fin_receb_clientes').update({ativo:false}).eq('id',data[0].id);if(r.error)return alert(r.error.message);q('#recebModal')?.remove();refresh()};
@@ -60,12 +60,12 @@ function decorateClientDetail(){
 
 function decorateClientCards(){
   if(!isAdmin())return;
-  qa(".receb-client-card[data-client-id]").forEach(card=>{if(q("[data-mcl-card-arch]",card))return;const del=[...card.querySelectorAll("button")].find(b=>/^Excluir$/i.test(b.textContent.trim()));if(!del)return;
+  qa(".receb-client-card[data-client-id]").forEach(card=>{if(q("[data-mcl-card-arch]",card))return;const del=[...card.querySelectorAll("button")].find(b=>/^(Excluir|Editar)$/i.test(b.textContent.trim()));if(!del)return;
     const b=document.createElement("button");b.type="button";b.className=del.className.replace(/danger/,"").trim()||"btn small ghost";b.dataset.mclCardArch="1";b.textContent="Arquivar";
     b.onclick=async e=>{e.stopPropagation();const id=card.dataset.clientId,name=(q("h4",card)?.textContent||"cliente").trim();if(!confirm(`Arquivar ${name}?
 
 O cliente e o histórico de parcelas são mantidos; ele só deixa de aparecer nos totais. Você pode reativar em "Arquivados".`))return;const r=await sb.from("fin_receb_clientes").update({ativo:false}).eq("id",id);if(r.error)return alert(r.error.message);card.remove();refresh()};
-    del.before(b)});
+    if(/^Excluir$/i.test(del.textContent.trim()))del.before(b);else del.after(b)});
 }
 
 /* ---------- Parcelas: editar e lançar ---------- */
@@ -85,7 +85,7 @@ function decorateHistory(){
   const hm=q('#recebHistoryModal');if(!hm||!isAdmin())return;
   const rows=qa('tbody tr[data-parcela-id]',hm);if(!rows.length)return;
   const clientId=rows[0].dataset.clienteId;
-  if(!q('[data-mcl-add-parcel]',hm)){const head=q('.modal-body',hm)||hm;const b=document.createElement('button');b.type='button';b.className='btn small';b.dataset.mclAddParcel='1';b.textContent='+ Parcela';b.style.margin='0 0 12px';b.onclick=async()=>{const {data,error}=await sb.from('fin_receb_parcelas').select('*').eq('cliente_id',clientId);if(error)return alert(error.message);const ps=data||[],num=Math.max(0,...ps.map(p=>Number(p.numero||0)))+1,last=[...ps].sort((a,b)=>String(b.vencimento||'').localeCompare(String(a.vencimento||'')))[0];let next='';if(last?.vencimento){const [y,m,d]=last.vencimento.split('-').map(Number),t=new Date(y,m,1,12);t.setDate(Math.min(d,new Date(y,m+1,0).getDate()));next=t.toISOString().slice(0,10)}parcelForm(clientId,null,num,next)};head.prepend(b)}
+  if(pode('receivables','criar')&&!q('[data-mcl-add-parcel]',hm)){const head=q('.modal-body',hm)||hm;const b=document.createElement('button');b.type='button';b.className='btn small';b.dataset.mclAddParcel='1';b.textContent='+ Parcela';b.style.margin='0 0 12px';b.onclick=async()=>{const {data,error}=await sb.from('fin_receb_parcelas').select('*').eq('cliente_id',clientId);if(error)return alert(error.message);const ps=data||[],num=Math.max(0,...ps.map(p=>Number(p.numero||0)))+1,last=[...ps].sort((a,b)=>String(b.vencimento||'').localeCompare(String(a.vencimento||'')))[0];let next='';if(last?.vencimento){const [y,m,d]=last.vencimento.split('-').map(Number),t=new Date(y,m,1,12);t.setDate(Math.min(d,new Date(y,m+1,0).getDate()));next=t.toISOString().slice(0,10)}parcelForm(clientId,null,num,next)};head.prepend(b)}
   rows.forEach(tr=>{/* aguarda a coluna Ação (botão de pagamento) para não misturar com a coluna Valor pago */const cell=q('.receb-pay-toggle',tr)?.closest('td');if(!cell||q('[data-mcl-parcel-edit]',tr))return;const b=document.createElement('button');b.type='button';b.className='btn small ghost';b.dataset.mclParcelEdit=tr.dataset.parcelaId;b.textContent='Editar';b.style.marginLeft='4px';b.onclick=async e=>{e.stopPropagation();const {data,error}=await sb.from('fin_receb_parcelas').select('*').eq('id',tr.dataset.parcelaId).maybeSingle();if(error||!data)return alert(error?.message||'Parcela não encontrada.');parcelForm(tr.dataset.clienteId,data)};cell.append(b)});
 }
 
